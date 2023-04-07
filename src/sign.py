@@ -1,8 +1,11 @@
 import os
 from hashlib import sha256
 from random import randint
+from typing import Tuple
+
 from Crypto.Util.number import bytes_to_long, long_to_bytes
 from ecdsa import ellipticcurve
+
 
 class ecdsa:
     def __init__(self):
@@ -35,12 +38,12 @@ class ecdsa:
             return False
         self.Q = ellipticcurve.PointJacobi(self.E, qx, qy, 1, self.n)
         return True
-    
+
     # Input:
     # m: message, x: private key
     # Output:
     # (r, s): signature pair
-    def sign(self, m: bytes) -> (bytes, bytes):
+    def sign(self, m: bytes) -> Tuple[bytes, bytes]:
         if self.x == None:
             raise Exception("Private key not initialized")
         h = bytes_to_long(sha256(m).digest())
