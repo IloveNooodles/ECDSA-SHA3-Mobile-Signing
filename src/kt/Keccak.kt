@@ -182,6 +182,7 @@ class Keccak private constructor(
     }
 }
 
+
 fun rot(a: Long, n: Int): Long {
 //    For example, shifting 20 bits would result in
 //    these partitioning
@@ -197,3 +198,8 @@ fun rot(a: Long, n: Int): Long {
 }
 typealias Block = List<UByte>
 typealias MutableBlock = MutableList<UByte>
+
+fun main(){
+  Keccak 
+
+}
