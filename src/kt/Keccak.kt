@@ -1,5 +1,8 @@
+import java.math.BigInteger
+
 typealias Block = List<UByte>
 typealias MutableBlock = MutableList<UByte>
+typealias LongLong = BigInteger
 var Zero: UByte = 0u
 
 class Keccak private constructor(
@@ -47,6 +50,7 @@ class Keccak private constructor(
             )
         }
 
+        /* 5 x 5 x 8 blocks */
         private fun initialState(): MutableList<UByte> {
             val zero: UByte = 0u
             return (0 until 200).map { zero }.toMutableList()
@@ -62,6 +66,8 @@ class Keccak private constructor(
         initBlock()
         inputBytes = bytes.toMutableList()
 
+        /* pad the input bytes */
+        pad(inputBytes, rate);
         val inputBlocks = inputBytes.chunked(rate);
 
         absorb(inputBlocks)
@@ -74,29 +80,32 @@ class Keccak private constructor(
     private fun absorb(inputBlocks: List<Block>){
         /* Do the absorption for every blocks */
         for (inputBlock in inputBlocks) {
-            println(inputBlock)
-            /* xor the rate */
+            /* xor the rate  */
             for (i in inputBlock.indices) {
                 state[i] = state[i] xor inputBlock[i]
             }
 
+            /* do the permutation */
             if (inputBlock.size == rate) {
-                println("Hore")
 //                TODO("Permute state")
             }
         }
     }
 
+    private fun permute(){
 
+    }
 
-    private fun permute() {
+    /**
+     * @see https://keccak.team/keccak_specs_summary.html
+     */
+    private fun roundFunction() {
         var stateMatrix = getStateAsMatrix()
-
-        var R = 1
+        var RC = 1
         for (round in 0 until 24) {
 
             /**
-             * ## θ
+             * ## θ step
             C = [lanes[x][0] ^ lanes[x][1] ^ lanes[x][2] ^ lanes[x][3] ^ lanes[x][4] for x in range(5)]
             D = [C[(x+4)%5] ^ ROL64(C[(x+1)%5], 1) for x in range(5)]
             lanes = [[lanes[x][y]^D[x] for y in range(5)] for x in range(5)]
@@ -147,18 +156,15 @@ class Keccak private constructor(
             }
 
             /**
-            ## ι
-            for j in range(7):
-            R = ((R << 1) ^ ((R >> 7)*0x71)) % 256
-            if (R & 2):
-            lanes[0][0] = lanes[0][0] ^ (1 << ((1<<j)-1))
-            return lanes
+             * ## ι step
              */
-            TODO("Implement ι step")
-            /**
-             * @see https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py
-             * @see https://keccak.team/keccak_specs_summary.html
-             */
+            for (i in 0..6){
+                RC = ((RC shl 1) xor ((RC shr 7) * 0x71)) % 256
+                val offsetShift = (1 shl i) - 1
+                if (RC and 2 != 0){
+                    stateMatrix[0][0] = stateMatrix[0][0] xor ((1 shl offsetShift).toLong())
+                }
+            }
         }
     }
 
@@ -218,15 +224,6 @@ fun main(){
 //    val capacity = blockSize / bit;
     val k = Keccak._256()
 
-    val message = "ABC"
-    var c = message.toByteArray().toUByteArray().toMutableList();
-    pad(c, rate)
-
-    var b = (0 until rate).map { Zero }.toMutableList()
-    pad(b, rate)
-
-    println(c. size)
-    println(c.size)
-
-    k.hash(c.toList());
+//    rot(3)
+//    k.hash(c.toList());
 }
