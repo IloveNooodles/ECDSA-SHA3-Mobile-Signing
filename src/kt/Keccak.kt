@@ -7,7 +7,7 @@ typealias LongLong = BigInteger
 var Zero: UByte = 0u
 
 fun Block.ToHex(): String = joinToString(separator = "") {
-    eachByte -> "%02x".format(eachByte.toByte())
+        eachByte -> "%02x".format(eachByte.toByte())
 }
 
 class Keccak private constructor(
@@ -105,16 +105,16 @@ class Keccak private constructor(
     }
 
     private fun paddingPhase(blockSize: Int){
-        val xorSize: UByte = 128u;
+        val xorSize: UByte = 0x80u
 
         state[blockSize] = state[blockSize] xor delimitedSuffix.toUByte();
 
         if(((delimitedSuffix and xorSize.toInt()) != 0) and (blockSize == rate - 1)){
-            roundFunction();
+            roundFunction()
         }
 
         state[rate - 1] = state[rate - 1] xor xorSize
-        roundFunction();
+        roundFunction()
     }
 
     private fun squeezingPhase(blockSize: Int): MutableBlock{
@@ -123,9 +123,7 @@ class Keccak private constructor(
         var outputLength = outputSize
         while(outputLength > 0){
             blockSize = min(outputLength, rate);
-            for(i in 0 until blockSize){
-                result.add(state[i].toUByte())
-            }
+            result.addAll(state.subList(0, blockSize))
 
             outputLength -= blockSize;
             if(outputLength > 0){
@@ -204,30 +202,64 @@ class Keccak private constructor(
                 RC = ((RC shl 1) xor ((RC shr 7) * 0x71)) % 256
                 val offsetShift = (1 shl i) - 1
                 if (RC and 2 != 0){
-                    stateMatrix[0][0] = stateMatrix[0][0] xor ((1 shl offsetShift).toLong())
+                    stateMatrix[0][0] = stateMatrix[0][0] xor ((1 shl offsetShift).toULong())
                 }
             }
         }
+
+        stateMatrix.transpose()
+        val flatStateMatrix = stateMatrix.flatten()
+        flatStateMatrix.mapIndexed { index, value ->
+            var cell = value
+            val offset = index * 8
+
+            val bytes = mutableListOf<UByte>()
+            for (i in 0 until 8) {
+                val byte = cell and 0xFFuL
+                cell = cell shr 8
+                bytes.add(byte.toUByte())
+            }
+
+            bytes.reversed().forEachIndexed { i, byte ->
+                state[offset + i] = byte
+            }
+
+        }
+
+        /**
+         * for (i in state.indices) {
+        val byte = state[i]
+        cell += byte.toULong() shl (8 * (i % 8))
+
+        if (i % 8 == 7) {
+        flatStateMatrix.add(cell)
+        cell = 0uL
+        }
+        }
+         */
+
     }
 
-    private fun getStateAsMatrix(): MutableList<MutableList<Long>> {
-        var cell = 0L
-        val flatStateMatrix = mutableListOf<Long>()
+    private fun getStateAsMatrix(): MutableList<MutableList<ULong>> {
+        var cell = 0uL
+        val flatStateMatrix = mutableListOf<ULong>()
 
         for (i in state.indices) {
             val byte = state[i]
-            cell = cell shl 8
-            cell += byte.toInt()
+            cell += byte.toULong() shl (8 * (i % 8))
 
             if (i % 8 == 7) {
                 flatStateMatrix.add(cell)
-                cell = 0L
+                cell = 0uL
             }
         }
 
+
         return flatStateMatrix.chunked(5) { list ->
             list.toMutableList()
-        }.toMutableList()
+        }.toMutableList().apply {
+            transpose()
+        }
     }
 
     private fun initBlock() {
@@ -236,18 +268,29 @@ class Keccak private constructor(
     }
 }
 
-fun rot(a: Long, n: Int): Long {
+fun rot(a: ULong, n: Int): ULong {
 //    For example, shifting 20 bits would result in
 //    these partitioning
 //    [44][20]
+    val n = 64 - n
     val shift = n % 64
 //    The [44] bits part is then shifted right 20 bits
 //    yielding `right`
-    val right = a ushr shift
+    val right = a shr shift
 //    The [20] bits part is then shifted left 44 bits
 //    yielding `left`
     val left = a shl (64 - shift)
     return left or right
+}
+
+fun MutableList<MutableList<ULong>>.transpose() {
+    for (i in indices) {
+        for (j in 0 until i) {
+            val k = this[i][j]
+            this[i][j] = this[j][i]
+            this[j][i] = k
+        }
+    }
 }
 
 
@@ -259,11 +302,13 @@ fun main(){
 //    val capacity = blockSize / bit;
     val k = Keccak._256()
 
-    val testMessage = "GARE";
-    val MUByteArray = testMessage.toByteArray().toUByteArray().toList();
+    val testMessage = "GARE"
+    val MUByteArray = testMessage.map { it.code.toUByte() }
 
     val digest = k.hash(MUByteArray);
     println(digest.ToHex());
 //    rot(3)
 //    k.hash(c.toList());
+
+//    println(rot(82937589, 12))
 }
