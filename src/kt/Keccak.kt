@@ -85,15 +85,11 @@ class Keccak private constructor(
                 state[i] = state[i] xor inputBlock[i]
             }
 
-            /* do the permutation */
+            /* do the round function */
             if (inputBlock.size == rate) {
-//                TODO("Permute state")
+                roundFunction();
             }
         }
-    }
-
-    private fun permute(){
-
     }
 
     /**
@@ -102,6 +98,8 @@ class Keccak private constructor(
     private fun roundFunction() {
         var stateMatrix = getStateAsMatrix()
         var RC = 1
+
+        /* For each round do the permutation */
         for (round in 0 until 24) {
 
             /**
