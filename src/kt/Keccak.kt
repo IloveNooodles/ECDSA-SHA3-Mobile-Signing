@@ -1,3 +1,7 @@
+typealias Block = List<UByte>
+typealias MutableBlock = MutableList<UByte>
+var Zero: UByte = 0u
+
 class Keccak private constructor(
     private val outputSize: Int,    // d, in bytes
     private val rate: Int,          // r, in bytes
@@ -5,6 +9,7 @@ class Keccak private constructor(
     private val delimitedSuffix: Int
 ) {
 
+    /* Static configuration of the keccak */
     companion object {
         fun _224(): Keccak {
             return Keccak(
@@ -44,13 +49,12 @@ class Keccak private constructor(
 
         private fun initialState(): MutableList<UByte> {
             val zero: UByte = 0u
-//            5x5 64 bit number
             return (0 until 200).map { zero }.toMutableList()
         }
     }
 
-    private val blockSize = rate + capacity
-    private val state = initialState()
+    private val blockSize = rate + capacity /* b = rate + capacity */
+    private val state = initialState() /* Empty b */
     private lateinit var inputBytes: MutableBlock
     private lateinit var block: MutableBlock
 
@@ -60,21 +64,29 @@ class Keccak private constructor(
 
         val inputBlocks = inputBytes.chunked(rate);
 
-//        Absorption
+        absorb(inputBlocks)
+
+//        TODO("Add padding")
+//        TODO("Implement squeezing phase")
+
+    }
+
+    private fun absorb(inputBlocks: List<Block>){
+        /* Do the absorption for every blocks */
         for (inputBlock in inputBlocks) {
+            println(inputBlock)
+            /* xor the rate */
             for (i in inputBlock.indices) {
                 state[i] = state[i] xor inputBlock[i]
             }
 
             if (inputBlock.size == rate) {
-                TODO("Permute state")
+                println("Hore")
+//                TODO("Permute state")
             }
         }
-
-        TODO("Add padding")
-        TODO("Implement squeezing phase")
-
     }
+
 
 
     private fun permute() {
@@ -174,14 +186,14 @@ class Keccak private constructor(
         val zero: UByte = 0u
         block = (0 until blockSize).map { zero }.toMutableList()
     }
-
-    private fun absorb(inputBlock: Block) {
-        for (i in 0 until rate) {
-            block[i] = block[i] xor inputBlock[i]
-        }
-    }
 }
 
+fun pad(input: MutableBlock, many: Int){
+    val currentSize = input.size
+    val zero: UByte = 0u
+    val paddedBlock = (0 until many - currentSize).map { zero }.toMutableList();
+    input.addAll(paddedBlock);
+}
 
 fun rot(a: Long, n: Int): Long {
 //    For example, shifting 20 bits would result in
@@ -196,10 +208,25 @@ fun rot(a: Long, n: Int): Long {
     val left = a shl (64 - shift)
     return left or right
 }
-typealias Block = List<UByte>
-typealias MutableBlock = MutableList<UByte>
+
 
 fun main(){
-  Keccak 
+    val bit = 8;
+//    val blockSize = 256;
+//    val digest = blockSize / bit;
+    val rate = 1088 / bit;
+//    val capacity = blockSize / bit;
+    val k = Keccak._256()
 
+    val message = "ABC"
+    var c = message.toByteArray().toUByteArray().toMutableList();
+    pad(c, rate)
+
+    var b = (0 until rate).map { Zero }.toMutableList()
+    pad(b, rate)
+
+    println(c. size)
+    println(c.size)
+
+    k.hash(c.toList());
 }
