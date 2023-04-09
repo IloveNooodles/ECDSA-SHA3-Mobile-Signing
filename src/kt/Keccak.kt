@@ -212,36 +212,23 @@ class Keccak private constructor(
             }
         }
 
-        stateMatrix.transpose()
-        val flatStateMatrix = stateMatrix.flatten()
-        flatStateMatrix.mapIndexed { index, value ->
-            var cell = value
-            val offset = index * 8
 
-            val bytes = mutableListOf<UByte>()
-            for (i in 0 until 8) {
-                val byte = cell and 0xFFuL
-                cell = cell shr 8
-                bytes.add(byte.toUByte())
-            }
 
-            bytes.reversed().forEachIndexed { i, byte ->
-                state[offset + i] = byte
+        for (x in 0..4){
+            for(y in 0..4){
+                //state.sub [8 * (x + 5 * y) : 8 * (x + 5 * y) + 8] =  (lanes[x][y])
+                val data = convertLittleEndian(stateMatrix[x][y])
+                var count = 0
+                for(i in (8 * (x + 5 * y)) until (8 * (x + 5 * y) + 8)){
+                    state[i] = data[count];
+                    count++;
+                }
             }
         }
+    }
 
-        /**
-         * for (i in state.indices) {
-        val byte = state[i]
-        cell += byte.toULong() shl (8 * (i % 8))
-
-        if (i % 8 == 7) {
-        flatStateMatrix.add(cell)
-        cell = 0uL
-        }
-        }
-         */
-
+    private fun convertLittleEndian(a: ULong ): MutableBlock {
+        return (0..7).map { ((a shr (8 * it)) and 0xffu).toUByte() }.toMutableList()
     }
 
     private fun getStateAsMatrix(): MutableList<MutableList<ULong>> {
