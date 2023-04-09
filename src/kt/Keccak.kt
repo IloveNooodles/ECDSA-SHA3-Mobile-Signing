@@ -1,9 +1,14 @@
 import java.math.BigInteger
+import kotlin.math.min
 
 typealias Block = List<UByte>
 typealias MutableBlock = MutableList<UByte>
 typealias LongLong = BigInteger
 var Zero: UByte = 0u
+
+fun Block.ToHex(): String = joinToString(separator = "") {
+    eachByte -> "%02x".format(eachByte.toByte())
+}
 
 class Keccak private constructor(
     private val outputSize: Int,    // d, in bytes
@@ -62,24 +67,28 @@ class Keccak private constructor(
     private lateinit var inputBytes: MutableBlock
     private lateinit var block: MutableBlock
 
-    fun hash(bytes: Block) {
+    fun hash(bytes: Block): Block {
         initBlock()
         inputBytes = bytes.toMutableList()
 
-        /* pad the input bytes */
-        pad(inputBytes, rate);
         val inputBlocks = inputBytes.chunked(rate);
 
-        absorb(inputBlocks)
+        val blockSize = absorbPhase(inputBlocks);
 
-//        TODO("Add padding")
-//        TODO("Implement squeezing phase")
+        /* pad the input bytes to get M % r = 0*/
+        paddingPhase(blockSize);
 
+        /* do the squeezing phase */
+        val res = squeezingPhase(blockSize);
+        return res
     }
 
-    private fun absorb(inputBlocks: List<Block>){
+    private fun absorbPhase(inputBlocks: List<Block>): Int{
         /* Do the absorption for every blocks */
+        var blockSize = 0
+
         for (inputBlock in inputBlocks) {
+            blockSize = min(inputBlock.size, rate);
             /* xor the rate  */
             for (i in inputBlock.indices) {
                 state[i] = state[i] xor inputBlock[i]
@@ -88,8 +97,43 @@ class Keccak private constructor(
             /* do the round function */
             if (inputBlock.size == rate) {
                 roundFunction();
+                blockSize = 0;
             }
         }
+
+        return blockSize
+    }
+
+    private fun paddingPhase(blockSize: Int){
+        val xorSize: UByte = 128u;
+
+        state[blockSize] = state[blockSize] xor delimitedSuffix.toUByte();
+
+        if(((delimitedSuffix and xorSize.toInt()) != 0) and (blockSize == rate - 1)){
+            roundFunction();
+        }
+
+        state[rate - 1] = state[rate - 1] xor xorSize
+        roundFunction();
+    }
+
+    private fun squeezingPhase(blockSize: Int): MutableBlock{
+        val result = mutableListOf<UByte>();
+        var blockSize = blockSize;
+        var outputLength = outputSize
+        while(outputLength > 0){
+            blockSize = min(outputLength, rate);
+            for(i in 0 until blockSize){
+                result.add(state[i].toUByte())
+            }
+
+            outputLength -= blockSize;
+            if(outputLength > 0){
+                roundFunction();
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -192,13 +236,6 @@ class Keccak private constructor(
     }
 }
 
-fun pad(input: MutableBlock, many: Int){
-    val currentSize = input.size
-    val zero: UByte = 0u
-    val paddedBlock = (0 until many - currentSize).map { zero }.toMutableList();
-    input.addAll(paddedBlock);
-}
-
 fun rot(a: Long, n: Int): Long {
 //    For example, shifting 20 bits would result in
 //    these partitioning
@@ -222,6 +259,11 @@ fun main(){
 //    val capacity = blockSize / bit;
     val k = Keccak._256()
 
+    val testMessage = "GARE";
+    val MUByteArray = testMessage.toByteArray().toUByteArray().toList();
+
+    val digest = k.hash(MUByteArray);
+    println(digest.ToHex());
 //    rot(3)
 //    k.hash(c.toList());
 }
