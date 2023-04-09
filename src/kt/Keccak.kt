@@ -150,9 +150,11 @@ class Keccak private constructor(
             D = [C[(x+4)%5] ^ ROL64(C[(x+1)%5], 1) for x in range(5)]
             lanes = [[lanes[x][y]^D[x] for y in range(5)] for x in range(5)]
              */
+
             val C = stateMatrix.map { row ->
                 row[0] xor row[1] xor row[2] xor row[3] xor row[4]
             }
+
             val D = (0 until 5).map {
                 C[(it + 4) % 5] xor rot(C[(it + 1) % 5], 1)
             }
@@ -202,7 +204,10 @@ class Keccak private constructor(
                 RC = ((RC shl 1) xor ((RC shr 7) * 0x71)) % 256
                 val offsetShift = (1 shl i) - 1
                 if (RC and 2 != 0){
-                    stateMatrix[0][0] = stateMatrix[0][0] xor ((1 shl offsetShift).toULong())
+//                  stateMatrix[0][0] = stateMatrix[0][0].xor(1 shl ((1 shl i) - 1))
+                    var bigIntMatrixElement = BigInteger.valueOf(stateMatrix[0][0].toLong())
+                    bigIntMatrixElement = bigIntMatrixElement.xor(BigInteger.ONE shl offsetShift)
+                    stateMatrix[0][0] = bigIntMatrixElement.toLong().toULong()
                 }
             }
         }
@@ -223,7 +228,6 @@ class Keccak private constructor(
             bytes.reversed().forEachIndexed { i, byte ->
                 state[offset + i] = byte
             }
-
         }
 
         /**
@@ -302,7 +306,7 @@ fun main(){
 //    val capacity = blockSize / bit;
     val k = Keccak._256()
 
-    val testMessage = "GARE"
+    val testMessage = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
     val MUByteArray = testMessage.map { it.code.toUByte() }
 
     val digest = k.hash(MUByteArray);
