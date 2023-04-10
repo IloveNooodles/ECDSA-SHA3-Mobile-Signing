@@ -23,6 +23,18 @@
         android:icon="?attr/iconActionSave"
         />
     <item
+        android:id="@+id/custom_encrypt"
+        android:title="Encrypt Mail"
+        />
+    <item
+        android:id="@+id/custom_sign"
+        android:title="Sign Mail"
+        />
+    <item
+        android:id="@+id/custom_encrypt_sign"
+        android:title="Encrypt and Sign Mail"
+        />
+    <item
         android:id="@+id/discard"
         android:title="@string/discard_action"
         android:icon="?attr/iconActionCancel"
