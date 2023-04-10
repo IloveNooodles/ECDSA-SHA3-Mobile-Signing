@@ -3,10 +3,8 @@ import kotlin.math.min
 
 typealias Block = List<UByte>
 typealias MutableBlock = MutableList<UByte>
-typealias LongLong = BigInteger
-var Zero: UByte = 0u
 
-fun Block.ToHex(): String = joinToString(separator = "") {
+fun Block.Hexdigest(): String = joinToString(separator = "") {
         eachByte -> "%02x".format(eachByte.toByte())
 }
 
@@ -67,7 +65,7 @@ class Keccak private constructor(
     private lateinit var inputBytes: MutableBlock
     private lateinit var block: MutableBlock
 
-    fun hash(bytes: Block): Block {
+    fun hash(bytes: Block): String {
         initBlock()
         inputBytes = bytes.toMutableList()
 
@@ -79,8 +77,12 @@ class Keccak private constructor(
         paddingPhase(blockSize);
 
         /* do the squeezing phase */
-        val res = squeezingPhase(blockSize);
-        return res
+        val digestBlock = squeezingPhase(blockSize);
+
+        /* Convert into hexdigest */
+        val hexDigest = digestBlock.Hexdigest()
+
+        return hexDigest
     }
 
     private fun absorbPhase(inputBlocks: List<Block>): Int{
@@ -108,7 +110,6 @@ class Keccak private constructor(
         val xorSize: UByte = 0x80u
 
         state[blockSize] = state[blockSize] xor delimitedSuffix.toUByte();
-
         if(((delimitedSuffix and xorSize.toInt()) != 0) and (blockSize == rate - 1)){
             roundFunction()
         }
@@ -119,13 +120,13 @@ class Keccak private constructor(
 
     private fun squeezingPhase(blockSize: Int): MutableBlock{
         val result = mutableListOf<UByte>();
-        var blockSize = blockSize;
+        var mutableBlockSize = blockSize;
         var outputLength = outputSize
         while(outputLength > 0){
-            blockSize = min(outputLength, rate);
-            result.addAll(state.subList(0, blockSize))
+            mutableBlockSize = min(outputLength, rate);
+            result.addAll(state.subList(0, mutableBlockSize))
 
-            outputLength -= blockSize;
+            outputLength -= mutableBlockSize;
             if(outputLength > 0){
                 roundFunction();
             }
@@ -204,7 +205,6 @@ class Keccak private constructor(
                 RC = ((RC shl 1) xor ((RC shr 7) * 0x71)) % 256
                 val offsetShift = (1 shl i) - 1
                 if (RC and 2 != 0){
-//                  stateMatrix[0][0] = stateMatrix[0][0].xor(1 shl ((1 shl i) - 1))
                     var bigIntMatrixElement = BigInteger.valueOf(stateMatrix[0][0].toLong())
                     bigIntMatrixElement = bigIntMatrixElement.xor(BigInteger.ONE shl offsetShift)
                     stateMatrix[0][0] = bigIntMatrixElement.toLong().toULong()
@@ -212,11 +212,8 @@ class Keccak private constructor(
             }
         }
 
-
-
         for (x in 0..4){
             for(y in 0..4){
-                //state.sub [8 * (x + 5 * y) : 8 * (x + 5 * y) + 8] =  (lanes[x][y])
                 val data = convertLittleEndian(stateMatrix[x][y])
                 var count = 0
                 for(i in (8 * (x + 5 * y)) until (8 * (x + 5 * y) + 8)){
@@ -286,20 +283,10 @@ fun MutableList<MutableList<ULong>>.transpose() {
 
 
 fun main(){
-    val bit = 8;
-//    val blockSize = 256;
-//    val digest = blockSize / bit;
-    val rate = 1088 / bit;
-//    val capacity = blockSize / bit;
-    val k = Keccak._256()
-
-    val testMessage = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val k = Keccak._512()
+    val testMessage = "A"
     val MUByteArray = testMessage.map { it.code.toUByte() }
 
     val digest = k.hash(MUByteArray);
-    println(digest.ToHex());
-//    rot(3)
-//    k.hash(c.toList());
-
-//    println(rot(82937589, 12))
+    println(digest)
 }
