@@ -1,3 +1,13 @@
+import java.math.BigInteger
+import kotlin.math.min
+
+typealias Block = List<UByte>
+typealias MutableBlock = MutableList<UByte>
+
+fun Block.Hexdigest(): String = joinToString(separator = "") {
+        eachByte -> "%02x".format(eachByte.toByte())
+}
+
 class Keccak private constructor(
     private val outputSize: Int,    // d, in bytes
     private val rate: Int,          // r, in bytes
@@ -5,6 +15,7 @@ class Keccak private constructor(
     private val delimitedSuffix: Int
 ) {
 
+    /* Static configuration of the keccak */
     companion object {
         fun _224(): Keccak {
             return Keccak(
@@ -42,56 +53,109 @@ class Keccak private constructor(
             )
         }
 
+        /* 5 x 5 x 8 blocks */
         private fun initialState(): MutableList<UByte> {
             val zero: UByte = 0u
-//            5x5 64 bit number
             return (0 until 200).map { zero }.toMutableList()
         }
     }
 
-    private val blockSize = rate + capacity
-    private val state = initialState()
+    private val blockSize = rate + capacity /* b = rate + capacity */
+    private val state = initialState() /* Empty b */
     private lateinit var inputBytes: MutableBlock
     private lateinit var block: MutableBlock
 
-    fun hash(bytes: Block) {
+    fun hash(bytes: Block): String {
         initBlock()
         inputBytes = bytes.toMutableList()
 
         val inputBlocks = inputBytes.chunked(rate);
 
-//        Absorption
+        val blockSize = absorbPhase(inputBlocks);
+
+        /* pad the input bytes to get M % r = 0*/
+        paddingPhase(blockSize);
+
+        /* do the squeezing phase */
+        val digestBlock = squeezingPhase(blockSize);
+
+        /* Convert into hexdigest */
+        val hexDigest = digestBlock.Hexdigest()
+
+        return hexDigest
+    }
+
+    private fun absorbPhase(inputBlocks: List<Block>): Int{
+        /* Do the absorption for every blocks */
+        var blockSize = 0
+
         for (inputBlock in inputBlocks) {
+            blockSize = min(inputBlock.size, rate);
+            /* xor the rate  */
             for (i in inputBlock.indices) {
                 state[i] = state[i] xor inputBlock[i]
             }
 
+            /* do the round function */
             if (inputBlock.size == rate) {
-                TODO("Permute state")
+                roundFunction();
+                blockSize = 0;
             }
         }
 
-        TODO("Add padding")
-        TODO("Implement squeezing phase")
-
+        return blockSize
     }
 
+    private fun paddingPhase(blockSize: Int){
+        val xorSize: UByte = 0x80u
 
-    private fun permute() {
+        state[blockSize] = state[blockSize] xor delimitedSuffix.toUByte();
+        if(((delimitedSuffix and xorSize.toInt()) != 0) and (blockSize == rate - 1)){
+            roundFunction()
+        }
+
+        state[rate - 1] = state[rate - 1] xor xorSize
+        roundFunction()
+    }
+
+    private fun squeezingPhase(blockSize: Int): MutableBlock{
+        val result = mutableListOf<UByte>();
+        var mutableBlockSize = blockSize;
+        var outputLength = outputSize
+        while(outputLength > 0){
+            mutableBlockSize = min(outputLength, rate);
+            result.addAll(state.subList(0, mutableBlockSize))
+
+            outputLength -= mutableBlockSize;
+            if(outputLength > 0){
+                roundFunction();
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * @see https://keccak.team/keccak_specs_summary.html
+     */
+    private fun roundFunction() {
         var stateMatrix = getStateAsMatrix()
+        var RC = 1
 
-        var R = 1
+        /* For each round do the permutation */
         for (round in 0 until 24) {
 
             /**
-             * ## θ
+             * ## θ step
             C = [lanes[x][0] ^ lanes[x][1] ^ lanes[x][2] ^ lanes[x][3] ^ lanes[x][4] for x in range(5)]
             D = [C[(x+4)%5] ^ ROL64(C[(x+1)%5], 1) for x in range(5)]
             lanes = [[lanes[x][y]^D[x] for y in range(5)] for x in range(5)]
              */
+
             val C = stateMatrix.map { row ->
                 row[0] xor row[1] xor row[2] xor row[3] xor row[4]
             }
+
             val D = (0 until 5).map {
                 C[(it + 4) % 5] xor rot(C[(it + 1) % 5], 1)
             }
@@ -135,71 +199,94 @@ class Keccak private constructor(
             }
 
             /**
-            ## ι
-            for j in range(7):
-            R = ((R << 1) ^ ((R >> 7)*0x71)) % 256
-            if (R & 2):
-            lanes[0][0] = lanes[0][0] ^ (1 << ((1<<j)-1))
-            return lanes
+             * ## ι step
              */
-            TODO("Implement ι step")
-            /**
-             * @see https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py
-             * @see https://keccak.team/keccak_specs_summary.html
-             */
-        }
-    }
-
-    private fun getStateAsMatrix(): MutableList<MutableList<Long>> {
-        var cell = 0L
-        val flatStateMatrix = mutableListOf<Long>()
-
-        for (i in state.indices) {
-            val byte = state[i]
-            cell = cell shl 8
-            cell += byte.toInt()
-
-            if (i % 8 == 7) {
-                flatStateMatrix.add(cell)
-                cell = 0L
+            for (i in 0..6){
+                RC = ((RC shl 1) xor ((RC shr 7) * 0x71)) % 256
+                val offsetShift = (1 shl i) - 1
+                if (RC and 2 != 0){
+                    var bigIntMatrixElement = BigInteger.valueOf(stateMatrix[0][0].toLong())
+                    bigIntMatrixElement = bigIntMatrixElement.xor(BigInteger.ONE shl offsetShift)
+                    stateMatrix[0][0] = bigIntMatrixElement.toLong().toULong()
+                }
             }
         }
 
+        for (x in 0..4){
+            for(y in 0..4){
+                val data = convertLittleEndian(stateMatrix[x][y])
+                var count = 0
+                for(i in (8 * (x + 5 * y)) until (8 * (x + 5 * y) + 8)){
+                    state[i] = data[count];
+                    count++;
+                }
+            }
+        }
+    }
+
+    private fun convertLittleEndian(a: ULong ): MutableBlock {
+        return (0..7).map { ((a shr (8 * it)) and 0xffu).toUByte() }.toMutableList()
+    }
+
+    private fun getStateAsMatrix(): MutableList<MutableList<ULong>> {
+        var cell = 0uL
+        val flatStateMatrix = mutableListOf<ULong>()
+
+        for (i in state.indices) {
+            val byte = state[i]
+            cell += byte.toULong() shl (8 * (i % 8))
+
+            if (i % 8 == 7) {
+                flatStateMatrix.add(cell)
+                cell = 0uL
+            }
+        }
+
+
         return flatStateMatrix.chunked(5) { list ->
             list.toMutableList()
-        }.toMutableList()
+        }.toMutableList().apply {
+            transpose()
+        }
     }
 
     private fun initBlock() {
         val zero: UByte = 0u
         block = (0 until blockSize).map { zero }.toMutableList()
     }
-
-    private fun absorb(inputBlock: Block) {
-        for (i in 0 until rate) {
-            block[i] = block[i] xor inputBlock[i]
-        }
-    }
 }
 
-
-fun rot(a: Long, n: Int): Long {
+fun rot(a: ULong, n: Int): ULong {
 //    For example, shifting 20 bits would result in
 //    these partitioning
 //    [44][20]
+    val n = 64 - n
     val shift = n % 64
 //    The [44] bits part is then shifted right 20 bits
 //    yielding `right`
-    val right = a ushr shift
+    val right = a shr shift
 //    The [20] bits part is then shifted left 44 bits
 //    yielding `left`
     val left = a shl (64 - shift)
     return left or right
 }
-typealias Block = List<UByte>
-typealias MutableBlock = MutableList<UByte>
+
+fun MutableList<MutableList<ULong>>.transpose() {
+    for (i in indices) {
+        for (j in 0 until i) {
+            val k = this[i][j]
+            this[i][j] = this[j][i]
+            this[j][i] = k
+        }
+    }
+}
+
 
 fun main(){
-  Keccak 
+    val k = Keccak._512()
+    val testMessage = "A"
+    val MUByteArray = testMessage.map { it.code.toUByte() }
 
+    val digest = k.hash(MUByteArray);
+    println(digest)
 }
