@@ -1,5 +1,4 @@
 import os
-from hashlib import sha256
 from random import randint
 from typing import Tuple
 
@@ -7,7 +6,7 @@ from Crypto.Util.number import bytes_to_long, long_to_bytes
 from ecdsa import ellipticcurve
 
 
-class ecdsa:
+class custom_ecdsa:
     def __init__(self):
         p = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
         a = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc
@@ -24,14 +23,14 @@ class ecdsa:
         self.Q = None
 
     # Initialize private key for signing, returns public key pair
-    def priv(self, x: bytes):
+    def priv(self, x: bytes) -> Tuple[bytes, bytes]:
         x = bytes_to_long(x) % self.n
         self.x = x
         self.Q = self.G * x
         return long_to_bytes(self.Q.x()), long_to_bytes(self.Q.y())
 
     # Initialize public key for verification
-    def pub(self, qx: bytes, qy: bytes):
+    def pub(self, qx: bytes, qy: bytes) -> bool:
         qx = bytes_to_long(qx)
         qy = bytes_to_long(qy)
         if not self.E.contains_point(qx, qy):
@@ -46,7 +45,8 @@ class ecdsa:
     def sign(self, m: bytes) -> Tuple[bytes, bytes]:
         if self.x == None:
             raise Exception("Private key not initialized")
-        h = bytes_to_long(sha256(m).digest())
+        h = bytes_to_long(m)
+        assert(h.bit_length() <= self.n.bit_length())
         k = 0
         while k == 0:
             k = bytes_to_long(os.urandom(32)) % self.n
@@ -68,7 +68,8 @@ class ecdsa:
         s = bytes_to_long(s)
         if (r % self.n != r) or (s % self.n != s):
             return False
-        h = bytes_to_long(sha256(m).digest())
+        h = bytes_to_long(m)
+        assert(h.bit_length() <= self.n.bit_length())
         u = h * pow(s, -1, self.n) % self.n
         v = r * pow(s, -1, self.n) % self.n
         X = u * self.G + v * self.Q

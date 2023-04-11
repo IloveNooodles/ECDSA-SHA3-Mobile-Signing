@@ -1044,7 +1044,13 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             attachmentPresenter.onClickAddAttachment(recipientPresenter);
         } else if (id == R.id.read_receipt) {
             onReadReceipt();
-        } else {
+        } else if (id == R.id.custom_encrypt) {
+            // TODO: encrypt
+        } else if (id == R.id.custom_sign){
+            // TODO: sign
+        } else if (id == R.id.custom_encrypt_sign){
+            // TODO: encrypt and sign
+        }else {
             return super.onOptionsItemSelected(item);
         }
         return true;
