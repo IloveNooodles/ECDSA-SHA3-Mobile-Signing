@@ -18,6 +18,9 @@ dependencies {
 
     implementation(projects.plugins.openpgpApiLib.openpgpApi)
 
+//    Keccak extension
+    implementation(projects.ext)
+
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.preference)
     implementation(libs.preferencex)

@@ -83,3 +83,4 @@ include(
 include(":plugins:openpgp-api-lib:openpgp-api")
 
 include(":cli:html-cleaner-cli")
+include(":ext")
