@@ -1059,7 +1059,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         } else if (id == R.id.custom_encrypt) {
             // TODO: encrypt
         } else if (id == R.id.custom_sign){
-            // TODO: sign
             RequestQueue volleyQueue = Volley.newRequestQueue(this);
             // url of the api through which we get random dog images
             String url = "http://10.10.10.55:9099/sign";
@@ -1121,8 +1120,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             // add the json request object created above
             // to the Volley request queue
             volleyQueue.add(jsonObjectRequest);
-        } else if (id == R.id.custom_encrypt_sign){
-            // TODO: encrypt and sign
         }else {
             return super.onOptionsItemSelected(item);
         }

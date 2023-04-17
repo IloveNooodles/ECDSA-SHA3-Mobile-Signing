@@ -118,6 +118,20 @@
         android:visible="false"
         app:showAsAction="never" />
 
+    <!-- MessageView -->
+    <item
+        android:id="@+id/custom_decrypt"
+        android:title="Decrypt Message"
+        android:visible="false"
+        app:showAsAction="never" />
+
+    <!-- MessageView -->
+    <item
+        android:id="@+id/custom_verify"
+        android:title="Verify Signature"
+        android:visible="false"
+        app:showAsAction="never" />
+
     <!-- always -->
     <item
         android:id="@+id/compose"

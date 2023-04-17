@@ -284,6 +284,8 @@ class MessageViewFragment :
         menu.findItem(R.id.unsubscribe).isVisible = canMessageBeUnsubscribed()
         menu.findItem(R.id.show_headers).isVisible = true
         menu.findItem(R.id.compose).isVisible = true
+        menu.findItem(R.id.custom_decrypt).isVisible = true
+        menu.findItem(R.id.custom_encrypt).isVisible = true
 
         val toggleTheme = menu.findItem(R.id.toggle_message_view_theme)
         if (generalSettingsManager.getSettings().fixedMessageViewTheme) {
@@ -319,6 +321,7 @@ class MessageViewFragment :
             R.id.move_to_drafts -> onMoveToDrafts()
             R.id.unsubscribe -> onUnsubscribe()
             R.id.show_headers -> onShowHeaders()
+            // TODO
             else -> return false
         }
 
