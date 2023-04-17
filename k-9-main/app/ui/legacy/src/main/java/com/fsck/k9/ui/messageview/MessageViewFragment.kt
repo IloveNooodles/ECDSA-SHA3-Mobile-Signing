@@ -317,7 +317,6 @@ class MessageViewFragment :
             toggleTheme.isVisible = true
         }
     }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (message == null) return false
 
@@ -348,7 +347,6 @@ class MessageViewFragment :
 
     private fun onVerify(){
         val newFragment = KeyDialogFragment();
-        val manager = requireFragmentManager();
         newFragment.show(childFragmentManager, "Key")
     }
 

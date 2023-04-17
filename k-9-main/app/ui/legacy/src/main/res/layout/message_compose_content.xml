@@ -36,38 +36,6 @@
                 android:paddingBottom="10dp"
                 style="@style/ComposeEditTextLarge"
                 />
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
-            <EditText
-                android:id="@+id/enc_key"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:hint="Encryption Key (hex encoded)"
-                android:inputType="text"
-                android:singleLine="true"
-                android:background="@android:color/transparent"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                style="@style/ComposeEditTextLarge"
-                />
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
-            <EditText
-                android:id="@+id/private_key"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:hint="Private Key (hex encoded)"
-                android:inputType="text"
-                android:singleLine="true"
-                android:background="@android:color/transparent"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                style="@style/ComposeEditTextLarge"
-                />
 
         </LinearLayout>
 

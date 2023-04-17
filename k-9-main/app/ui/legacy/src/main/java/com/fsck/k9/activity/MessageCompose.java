@@ -34,9 +34,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
+
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -117,6 +122,7 @@ import com.fsck.k9.message.QuotedTextMode;
 import com.fsck.k9.message.SimpleMessageBuilder;
 import com.fsck.k9.message.SimpleMessageFormat;
 import com.fsck.k9.search.LocalSearch;
+import com.fsck.k9.ui.KeyDialogFragment;
 import com.fsck.k9.ui.R;
 import com.fsck.k9.ui.base.K9Activity;
 import com.fsck.k9.ui.base.ThemeManager;
@@ -140,7 +146,9 @@ import timber.log.Timber;
 public class MessageCompose extends K9Activity implements OnClickListener,
         CancelListener, AttachmentDownloadCancelListener, OnFocusChangeListener,
         OnOpenPgpInlineChangeListener, OnOpenPgpSignOnlyChangeListener, MessageBuilder.Callback,
-        AttachmentPresenter.AttachmentsChangedListener, OnOpenPgpDisableListener, PermissionUiHelper {
+        AttachmentPresenter.AttachmentsChangedListener, OnOpenPgpDisableListener, PermissionUiHelper,
+    KeyDialogFragment.NoticeDialogListener
+{
 
     private static final int DIALOG_SAVE_OR_DISCARD_DRAFT_MESSAGE = 1;
     private static final int DIALOG_CONFIRM_DISCARD_ON_BACK = 2;
@@ -233,6 +241,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private boolean alreadyNotifiedUserOfEmptySubject = false;
     private boolean changesMadeSinceLastSave = false;
 
+    private String key = "";
     private Long draftMessageId = null;
 
     private Action action;
@@ -1060,85 +1069,89 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         } else if (id == R.id.custom_encrypt) {
             // TODO: encrypt
         } else if (id == R.id.custom_sign){
-            RequestQueue volleyQueue = Volley.newRequestQueue(this);
-            // url of the api through which we get random dog images
-            String url = "http://10.10.10.55:9099/sign";
-
-            final EditText edit  = (EditText) findViewById( R.id.message_content );
-            String text = edit.getText().toString();
-            final EditText privKey =(EditText) findViewById(R.id.private_key);
-            String key = privKey.getText().toString();
-            if (text.length() == 0) {
-                Toast.makeText(this, "Message is empty, nothing to sign", Toast.LENGTH_SHORT).show();
-                return true;
-            }
-            if (key.length() == 0){
-                Toast.makeText(this, "Private key cannot be empty", Toast.LENGTH_SHORT).show();
-                return true;
-            }
-            Keccak hash = Keccak.Companion._256();
-            String digest = hash.hash(text.getBytes());
-
-            // since the response we get from the api is in JSON, we
-            // need to use `JsonObjectRequest` for parsing the
-            // request response
-            JSONObject jsonBody = new JSONObject();
-            try {
-                jsonBody.put("hash", digest);
-                jsonBody.put("private_key", key);
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
-
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                // we are using GET HTTP request method
-                Request.Method.POST,
-                // url we want to send the HTTP request to
-                url,
-                // this parameter is used to send a JSON object to the
-                // server, since this is not required in our case,
-                // we are keeping it `null`
-                jsonBody,
-
-                // lambda function for handling the case
-                // when the HTTP request succeeds
-                (Response.Listener<JSONObject>) response -> {
-                    // get the image url from the JSON object
-                    String dogImageUrl;
-                    try {
-                        // load the image into the ImageView using Glide.
-                        String publicKey = response.getString("public_key");
-                        String signature = response.getString("signature");
-
-                        Toast toast = Toast.makeText(this, "Public Key:" + publicKey, Toast.LENGTH_LONG);
-                        toast.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, 0);
-                        toast.show();
-                        edit.setText(text + "\n\n\n" + "<s>" + signature + "</s>");
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                },
-
-                // lambda function for handling the case
-                // when the HTTP request fails
-                (Response.ErrorListener) error -> {
-                    // make a Toast telling the user
-                    // that something went wrong
-                    Toast toast = Toast.makeText(this, "Error! Cannot sign", Toast.LENGTH_LONG);
-                    toast.show();
-                    Log.d("e", error.getMessage());
-                }
-            );
-
-            // add the json request object created above
-            // to the Volley request queue
-            volleyQueue.add(jsonObjectRequest);
+            KeyDialogFragment newFragment = new KeyDialogFragment();
+            FragmentManager manager = getSupportFragmentManager();
+            newFragment.show(manager, "Sign");
         }else {
             return super.onOptionsItemSelected(item);
         }
         return true;
     }
 
+    private void customSign(){
+        RequestQueue volleyQueue = Volley.newRequestQueue(this);
+        // url of the api through which we get random dog images
+        String url = "http://10.10.10.55:9099/sign";
+
+        final EditText edit  = (EditText) findViewById( R.id.message_content );
+        String text = edit.getText().toString();
+        String key = this.key;
+        if (text.length() == 0) {
+            Toast.makeText(this, "Message is empty, nothing to sign", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (key.length() == 0){
+            Toast.makeText(this, "Private key cannot be empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Keccak hash = Keccak.Companion._256();
+        String digest = hash.hash(text.getBytes());
+
+        // since the response we get from the api is in JSON, we
+        // need to use `JsonObjectRequest` for parsing the
+        // request response
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("hash", digest);
+            jsonBody.put("private_key", key);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+            // we are using GET HTTP request method
+            Request.Method.POST,
+            // url we want to send the HTTP request to
+            url,
+            // this parameter is used to send a JSON object to the
+            // server, since this is not required in our case,
+            // we are keeping it `null`
+            jsonBody,
+
+            // lambda function for handling the case
+            // when the HTTP request succeeds
+            (Response.Listener<JSONObject>) response -> {
+                // get the image url from the JSON object
+                String dogImageUrl;
+                try {
+                    // load the image into the ImageView using Glide.
+                    String publicKey = response.getString("public_key");
+                    String signature = response.getString("signature");
+
+                    Toast toast = Toast.makeText(this, "Public Key:" + publicKey, Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, 0);
+                    toast.show();
+                    edit.setText(text + "\n\n\n" + "<s>" + signature + "</s>");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            },
+
+            // lambda function for handling the case
+            // when the HTTP request fails
+            (Response.ErrorListener) error -> {
+                // make a Toast telling the user
+                // that something went wrong
+                Toast toast = Toast.makeText(this, "Error! Cannot sign", Toast.LENGTH_LONG);
+                toast.show();
+                Log.d("e", error.getMessage());
+            }
+        );
+
+        // add the json request object created above
+        // to the Volley request queue
+        volleyQueue.add(jsonObjectRequest);
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -1547,6 +1560,19 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         replyToPresenter.setIdentity(identity);
 
         quotedMessagePresenter.processDraftMessage(messageViewInfo, k9identity);
+    }
+
+    @Override
+    public void onDialogPositiveClick(@NonNull DialogFragment dialog) {
+        EditText field = (EditText) dialog.getDialog().findViewById(R.id.key);
+        this.key = field.getText().toString();
+        if (dialog.getTag() == "sign") customSign();
+        else if (dialog.getTag() == "encrypt") return; // TODO: customEncrypt
+    }
+
+    @Override
+    public void onDialogNegativeClick(@NonNull DialogFragment dialog) {
+
     }
 
     static class SendMessageTask extends AsyncTask<Void, Void, Void> {
