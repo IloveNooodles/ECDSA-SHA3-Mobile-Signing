@@ -266,6 +266,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     private boolean sendMessageHasBeenTriggered = false;
 
+//    Extensions
+    private static String API_URL = "192.168.174.82:9099";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -1067,7 +1070,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         } else if (id == R.id.read_receipt) {
             onReadReceipt();
         } else if (id == R.id.custom_encrypt) {
-            // TODO: encrypt
+            KeyDialogFragment newFragment = new KeyDialogFragment();
+            FragmentManager manager = getSupportFragmentManager();
+            newFragment.show(manager, "encrypt");
         } else if (id == R.id.custom_sign){
             KeyDialogFragment newFragment = new KeyDialogFragment();
             FragmentManager manager = getSupportFragmentManager();
@@ -1081,7 +1086,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private void customSign(){
         RequestQueue volleyQueue = Volley.newRequestQueue(this);
         // url of the api through which we get random dog images
-        String url = "http://10.10.10.55:9099/sign";
+        String url = "http://" + API_URL + "/sign";
 
         final EditText edit  = (EditText) findViewById( R.id.message_content );
         String text = edit.getText().toString();
@@ -1152,6 +1157,48 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         // to the Volley request queue
         volleyQueue.add(jsonObjectRequest);
     }
+
+    private void encrypt() {
+        RequestQueue volleyQueue = Volley.newRequestQueue(this);
+        String url = "http://" + API_URL + "/encrypt";
+        final EditText edit = (EditText) findViewById( R.id.message_content );
+        String text = edit.getText().toString();
+        String key = this.key;
+        if (text.length() == 0) {
+            Toast.makeText(this, "Email body is empty!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (key.length() == 0){
+            Toast.makeText(this, "Encryption key cannot be empty!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("message", edit.getText());
+            jsonBody.put("key", key);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+            Request.Method.POST,
+            url,
+            jsonBody,
+            (Response.Listener<JSONObject>) response -> {
+                try {
+                    String encryptedMessage = response.getString("encrypted");
+                    edit.setText(encryptedMessage);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            },
+            (Response.ErrorListener) error -> {
+                Toast toast = Toast.makeText(this, "An error occured!", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        );
+        volleyQueue.add(jsonObjectRequest);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -1567,7 +1614,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         EditText field = (EditText) dialog.getDialog().findViewById(R.id.key);
         this.key = field.getText().toString();
         if (dialog.getTag() == "sign") customSign();
-        else if (dialog.getTag() == "encrypt") return; // TODO: customEncrypt
+        else if (dialog.getTag() == "encrypt") encrypt();
     }
 
     @Override
