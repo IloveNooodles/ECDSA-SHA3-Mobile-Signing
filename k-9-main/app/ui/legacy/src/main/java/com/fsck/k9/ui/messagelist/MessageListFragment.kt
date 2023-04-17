@@ -6,11 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -19,6 +21,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
@@ -46,6 +49,7 @@ import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchAccount
 import com.fsck.k9.search.getAccounts
+import com.fsck.k9.ui.KeyDialogFragment
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.changelog.RecentChangesActivity
 import com.fsck.k9.ui.changelog.RecentChangesViewModel
@@ -71,7 +75,8 @@ private const val RECENT_CHANGES_SNACKBAR_DURATION = 10 * 1000
 class MessageListFragment :
     Fragment(),
     ConfirmationDialogFragmentListener,
-    MessageListItemActionListener {
+    MessageListItemActionListener,
+    KeyDialogFragment.NoticeDialogListener{
 
     val viewModel: MessageListViewModel by viewModel()
     private val recentChangesViewModel: RecentChangesViewModel by viewModel()
@@ -159,6 +164,16 @@ class MessageListFragment :
     val isShowAccountChip: Boolean
         get() = !isSingleAccountMode
 
+
+    override fun onDialogPositiveClick(dialog: DialogFragment) {
+        // User touched the dialog's positive button
+        val key = dialog.dialog?.findViewById<EditText>(R.id.key)?.text.toString();
+        Log.d("Key", key);
+    }
+
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
+        // User touched the dialog's negative button
+    }
     override fun onAttach(context: Context) {
         super.onAttach(context)
 

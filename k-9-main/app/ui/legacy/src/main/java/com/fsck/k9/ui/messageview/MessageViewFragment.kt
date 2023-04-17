@@ -9,6 +9,7 @@ import android.content.IntentSender.SendIntentException
 import android.os.Bundle
 import android.os.Parcelable
 import android.os.SystemClock
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -16,6 +17,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.withStyledAttributes
@@ -42,6 +44,7 @@ import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.mailstore.MessageViewInfo
 import com.fsck.k9.preferences.AccountManager
 import com.fsck.k9.preferences.GeneralSettingsManager
+import com.fsck.k9.ui.KeyDialogFragment
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.base.Theme
 import com.fsck.k9.ui.base.ThemeManager
@@ -59,7 +62,9 @@ import timber.log.Timber
 class MessageViewFragment :
     Fragment(),
     ConfirmationDialogFragmentListener,
-    AttachmentViewCallback {
+    AttachmentViewCallback,
+    KeyDialogFragment.NoticeDialogListener
+{
 
     private val themeManager: ThemeManager by inject()
     private val messageLoaderHelperFactory: MessageLoaderHelperFactory by inject()
@@ -93,6 +98,18 @@ class MessageViewFragment :
 
     private var isActive: Boolean = false
         private set
+
+
+    override fun onDialogPositiveClick(dialog: DialogFragment) {
+        // User touched the dialog's positive button
+        val key = dialog.dialog?.findViewById<EditText>(R.id.key)?.text.toString();
+        Log.d("Key", key);
+    }
+
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
+        // User touched the dialog's negative button
+    }
+
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -330,7 +347,9 @@ class MessageViewFragment :
     }
 
     private fun onVerify(){
-
+        val newFragment = KeyDialogFragment();
+        val manager = requireFragmentManager();
+        newFragment.show(childFragmentManager, "Key")
     }
 
     private fun onShowHeaders() {

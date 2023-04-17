@@ -9,12 +9,14 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
+import android.widget.EditText
 import android.widget.ProgressBar
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.view.ActionMode
@@ -22,10 +24,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentTransaction
-import androidx.fragment.app.commit
-import androidx.fragment.app.commitNow
+import androidx.fragment.app.*
 import app.k9mail.core.android.common.contact.CachingRepository
 import app.k9mail.core.android.common.contact.ContactRepository
 import com.fsck.k9.Account
@@ -47,6 +46,7 @@ import com.fsck.k9.search.SearchSpecification.SearchField
 import com.fsck.k9.search.isUnifiedInbox
 import com.fsck.k9.ui.BuildConfig
 import com.fsck.k9.ui.K9Drawer
+import com.fsck.k9.ui.KeyDialogFragment
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.base.K9Activity
 import com.fsck.k9.ui.managefolders.ManageFoldersActivity
@@ -82,7 +82,9 @@ open class MessageList :
     MessageViewContainerListener,
     FragmentManager.OnBackStackChangedListener,
     OnSwitchCompleteListener,
-    PermissionUiHelper {
+    PermissionUiHelper,
+    KeyDialogFragment.NoticeDialogListener
+{
 
     protected val searchStatusManager: SearchStatusManager by inject()
     private val preferences: Preferences by inject()
@@ -136,6 +138,16 @@ open class MessageList :
     private val isShowAccountChip: Boolean
         get() = messageListFragment?.isShowAccountChip ?: true
 
+
+    override fun onDialogPositiveClick(dialog: DialogFragment) {
+        // User touched the dialog's positive button
+        val key = dialog.dialog?.findViewById<EditText>(R.id.key)?.text.toString();
+        Log.d("Key", key);
+    }
+
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
+        // User touched the dialog's negative button
+    }
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
