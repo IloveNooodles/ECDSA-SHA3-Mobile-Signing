@@ -67,9 +67,9 @@ class Keccak private constructor(
     private lateinit var inputBytes: MutableBlock
     private lateinit var block: MutableBlock
 
-    fun hash(bytes: Block): String {
+    fun hash(bytes: ByteArray): String {
         initBlock()
-        inputBytes = bytes.toMutableList()
+        inputBytes = bytes.asUByteArray().toMutableList();
 
         val inputBlocks = inputBytes.chunked(rate);
 

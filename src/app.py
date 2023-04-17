@@ -19,7 +19,8 @@ def index():
 # signature -> hex encoded string
 @app.route("/sign", methods=["POST"])
 def sign():
-    form = request.form
+    form = request.json
+    print(form)
     assert("hash" in form)
     assert("private_key" in form)
     data = bytes.fromhex(form["hash"])
@@ -64,4 +65,4 @@ def verify():
     return jsonify(response)
 
 if __name__ == "__main__":
-    app.run("localhost", port=9099, debug=True)
+    app.run("0.0.0.0", port=9099, debug=True)

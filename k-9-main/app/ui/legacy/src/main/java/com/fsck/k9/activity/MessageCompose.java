@@ -2,9 +2,15 @@ package com.fsck.k9.activity;
 
 import ext.keccak.Keccak;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +39,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -121,6 +128,8 @@ import com.fsck.k9.ui.permissions.Permission;
 import com.fsck.k9.ui.permissions.PermissionUiHelper;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.util.OpenPgpApi;
 import timber.log.Timber;
@@ -1051,6 +1060,67 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             // TODO: encrypt
         } else if (id == R.id.custom_sign){
             // TODO: sign
+            RequestQueue volleyQueue = Volley.newRequestQueue(this);
+            // url of the api through which we get random dog images
+            String url = "http://10.10.10.55:9099/sign";
+
+            final EditText edit  = (EditText) findViewById( R.id.message_content );
+            String text = edit.getText().toString();
+
+            Keccak hash = Keccak.Companion._256();
+            String digest = hash.hash(text.getBytes());
+
+            // since the response we get from the api is in JSON, we
+            // need to use `JsonObjectRequest` for parsing the
+            // request response
+            JSONObject jsonBody = new JSONObject();
+            try {
+                jsonBody.put("hash", digest);
+                jsonBody.put("private_key", "2c30");
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                // we are using GET HTTP request method
+                Request.Method.POST,
+                // url we want to send the HTTP request to
+                url,
+                // this parameter is used to send a JSON object to the
+                // server, since this is not required in our case,
+                // we are keeping it `null`
+                jsonBody,
+
+                // lambda function for handling the case
+                // when the HTTP request succeeds
+                (Response.Listener<JSONObject>) response -> {
+                    // get the image url from the JSON object
+                    String dogImageUrl;
+                    try {
+                        // load the image into the ImageView using Glide.
+                        String publicKey = response.getString("public_key");
+                        String signature = response.getString("signature");
+
+                        Toast.makeText(this, publicKey, Toast.LENGTH_LONG);
+                        edit.setText(text + "\n" + "<s>" + signature + "</s>");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                },
+
+                // lambda function for handling the case
+                // when the HTTP request fails
+                (Response.ErrorListener) error -> {
+                    // make a Toast telling the user
+                    // that something went wrong
+                    Toast.makeText(this, "Error! Cannot sign", Toast.LENGTH_LONG).show();
+                    Log.d("e", error.getMessage());
+                }
+            );
+
+            // add the json request object created above
+            // to the Volley request queue
+            volleyQueue.add(jsonObjectRequest);
         } else if (id == R.id.custom_encrypt_sign){
             // TODO: encrypt and sign
         }else {
