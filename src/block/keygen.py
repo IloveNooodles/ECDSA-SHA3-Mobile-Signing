@@ -1,4 +1,4 @@
-from sbox import sub_byte
+from .sbox import sub_byte
 from pwn import xor
 
 

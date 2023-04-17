@@ -1,6 +1,6 @@
 from pwn import xor
 
-from cipher import Cipher
+from .cipher import Cipher
 
 
 class IES:
@@ -42,7 +42,7 @@ class IES:
             return self._encrypt_ctr(data)
         else:
             raise NotImplementedError()
-        
+
     def decrypt(self, data: bytes):
         if (self._mode == self.MODE_ECB):
             return self._decrypt_ecb(data)
@@ -58,21 +58,21 @@ class IES:
             raise NotImplementedError()
 
     def _encrypt_ecb(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         for i in range(0, len(data), self.__block_size):
             result += self._cipher.encrypt(data[i:i+self.__block_size])
         return bytes(result)
-    
+
     def _decrypt_ecb(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         for i in range(0, len(data), self.__block_size):
             result += self._cipher.decrypt(data[i:i+self.__block_size])
         return bytes(result)
-    
+
     def _encrypt_cbc(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         cur_xor = self._iv
         for i in range(0, len(data), self.__block_size):
@@ -81,9 +81,9 @@ class IES:
             cur_xor = self._cipher.encrypt(block)
             result += cur_xor
         return bytes(result)
-    
+
     def _decrypt_cbc(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         cur_xor = self._iv
         for i in range(0, len(data), self.__block_size):
@@ -94,7 +94,7 @@ class IES:
         return bytes(result)
 
     def _encrypt_ofb(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         cur_xor = self._iv
         for i in range(0, len(data), self.__block_size):
@@ -102,9 +102,9 @@ class IES:
             cur_xor = self._cipher.encrypt(cur_xor)
             result += xor(block, cur_xor)
         return bytes(result)
-    
+
     def _decrypt_ofb(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         cur_xor = self._iv
         for i in range(0, len(data), self.__block_size):
@@ -114,7 +114,7 @@ class IES:
         return bytes(result)
 
     def _encrypt_cfb(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         cur_xor = self._iv
         for i in range(0, len(data), self.__block_size):
@@ -123,9 +123,9 @@ class IES:
             cur_xor = xor(block, cur_xor)
             result += cur_xor
         return bytes(result)
-    
+
     def _decrypt_cfb(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         cur_xor = self._iv
         for i in range(0, len(data), self.__block_size):
@@ -136,7 +136,7 @@ class IES:
         return bytes(result)
 
     def _encrypt_ctr(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         for i in range(0, len(data), self.__block_size):
             block = data[i:i+self.__block_size]
@@ -146,9 +146,9 @@ class IES:
             cur_xor = self._cipher.encrypt(cur_xor)
             result += xor(block, cur_xor)
         return bytes(result)
-    
+
     def _decrypt_ctr(self, data: bytes):
-        assert(len(data)%self.__block_size == 0)
+        assert(len(data) % self.__block_size == 0)
         result = bytearray()
         for i in range(0, len(data), self.__block_size):
             block = data[i:i+self.__block_size]

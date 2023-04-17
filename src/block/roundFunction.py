@@ -1,9 +1,11 @@
 from pwn import xor
 from math import gcd
 from typing import Callable
-from expand import expand
-from sbox import sub_bytes
-from pbox import permute
+from .expand import expand
+from .sbox import sub_bytes
+from .pbox import permute
+
+
 class RoundFunction:
     def get_f(self) -> Callable[[bytes, bytes], bytes]:
         return self._f
@@ -22,11 +24,11 @@ class RoundFunction:
         left = self._expand(left, keys[2])
         right = self._expand(right, keys[3])
         return xor(left, right)
-    
+
     def _slice_box(self, input: bytes, key: bytes) -> (bytes, bytes):
         assert(len(key) == 2)
         assert(len(input) == 8)
-        
+
         key_binary = format(int.from_bytes(key, "big"), '#018b')[2:]
         n = 64
         a = int(key_binary[:6], 2)
@@ -50,9 +52,9 @@ class RoundFunction:
 
     def _expand(self, input: bytes, key: bytes) -> bytes:
         return expand(input, key)
-    
+
     def _substitute(self, input: bytes) -> bytes:
         return sub_bytes(input)
-    
+
     def _permute(self, input: bytes) -> bytes:
         return permute(input)
