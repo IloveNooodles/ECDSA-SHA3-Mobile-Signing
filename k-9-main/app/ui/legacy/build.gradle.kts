@@ -17,7 +17,7 @@ dependencies {
     compileOnly(projects.mail.protocols.webdav)
 
     implementation(projects.plugins.openpgpApiLib.openpgpApi)
-
+    implementation("com.android.volley:volley:1.2.1")
 //    Keccak extension
     implementation(projects.ext)
 

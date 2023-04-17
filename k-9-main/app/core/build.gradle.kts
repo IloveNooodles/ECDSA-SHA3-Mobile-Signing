@@ -11,11 +11,10 @@ dependencies {
     api(projects.core.android.common)
 
     implementation(projects.plugins.openpgpApiLib.openpgpApi)
-
     api(libs.koin.android)
 
     api(libs.androidx.annotation)
-
+    implementation("com.android.volley:volley:1.2.1")
     implementation(libs.okio)
     implementation(libs.commons.io)
     implementation(libs.androidx.core.ktx)
