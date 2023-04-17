@@ -45,7 +45,7 @@ def sign():
 # error -> string
 @app.route("/verify", methods=["POST"])
 def verify():
-    form = request.form
+    form = request.json
     assert("hash" in form)
     assert("signature" in form)
     assert("public_key" in form)

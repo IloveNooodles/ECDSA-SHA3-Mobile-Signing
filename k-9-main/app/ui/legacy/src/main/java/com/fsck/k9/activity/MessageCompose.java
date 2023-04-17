@@ -42,6 +42,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -1065,7 +1066,16 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
             final EditText edit  = (EditText) findViewById( R.id.message_content );
             String text = edit.getText().toString();
-
+            final EditText privKey =(EditText) findViewById(R.id.private_key);
+            String key = privKey.getText().toString();
+            if (text.length() == 0) {
+                Toast.makeText(this, "Message is empty, nothing to sign", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            if (key.length() == 0){
+                Toast.makeText(this, "Private key cannot be empty", Toast.LENGTH_SHORT).show();
+                return true;
+            }
             Keccak hash = Keccak.Companion._256();
             String digest = hash.hash(text.getBytes());
 
@@ -1075,7 +1085,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             JSONObject jsonBody = new JSONObject();
             try {
                 jsonBody.put("hash", digest);
-                jsonBody.put("private_key", "2c30");
+                jsonBody.put("private_key", key);
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             }
@@ -1100,8 +1110,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                         String publicKey = response.getString("public_key");
                         String signature = response.getString("signature");
 
-                        Toast.makeText(this, publicKey, Toast.LENGTH_LONG);
-                        edit.setText(text + "\n" + "<s>" + signature + "</s>");
+                        Toast toast = Toast.makeText(this, "Public Key:" + publicKey, Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, 0);
+                        toast.show();
+                        edit.setText(text + "\n\n\n" + "<s>" + signature + "</s>");
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -1112,7 +1124,8 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                 (Response.ErrorListener) error -> {
                     // make a Toast telling the user
                     // that something went wrong
-                    Toast.makeText(this, "Error! Cannot sign", Toast.LENGTH_LONG).show();
+                    Toast toast = Toast.makeText(this, "Error! Cannot sign", Toast.LENGTH_LONG);
+                    toast.show();
                     Log.d("e", error.getMessage());
                 }
             );

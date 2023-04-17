@@ -285,7 +285,7 @@ class MessageViewFragment :
         menu.findItem(R.id.show_headers).isVisible = true
         menu.findItem(R.id.compose).isVisible = true
         menu.findItem(R.id.custom_decrypt).isVisible = true
-        menu.findItem(R.id.custom_encrypt).isVisible = true
+        menu.findItem(R.id.custom_verify).isVisible = true
 
         val toggleTheme = menu.findItem(R.id.toggle_message_view_theme)
         if (generalSettingsManager.getSettings().fixedMessageViewTheme) {
@@ -322,10 +322,15 @@ class MessageViewFragment :
             R.id.unsubscribe -> onUnsubscribe()
             R.id.show_headers -> onShowHeaders()
             // TODO
+            R.id.custom_verify -> onVerify()
             else -> return false
         }
 
         return true
+    }
+
+    private fun onVerify(){
+
     }
 
     private fun onShowHeaders() {
