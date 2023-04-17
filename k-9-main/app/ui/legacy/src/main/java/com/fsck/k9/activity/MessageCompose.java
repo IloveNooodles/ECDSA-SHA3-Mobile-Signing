@@ -1071,7 +1071,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
         } else if (id == R.id.custom_sign){
             KeyDialogFragment newFragment = new KeyDialogFragment();
             FragmentManager manager = getSupportFragmentManager();
-            newFragment.show(manager, "Sign");
+            newFragment.show(manager, "sign");
         }else {
             return super.onOptionsItemSelected(item);
         }
