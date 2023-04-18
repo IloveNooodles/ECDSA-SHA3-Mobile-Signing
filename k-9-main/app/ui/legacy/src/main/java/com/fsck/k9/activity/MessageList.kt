@@ -10,14 +10,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
-import android.view.KeyEvent
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.view.animation.AnimationUtils
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
@@ -27,6 +24,10 @@ import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.fragment.app.*
 import app.k9mail.core.android.common.contact.CachingRepository
 import app.k9mail.core.android.common.contact.ContactRepository
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.fsck.k9.Account
 import com.fsck.k9.K9
 import com.fsck.k9.K9.SplitViewMode
@@ -62,9 +63,12 @@ import com.fsck.k9.ui.onboarding.OnboardingActivity
 import com.fsck.k9.ui.permissions.K9PermissionUiHelper
 import com.fsck.k9.ui.permissions.Permission
 import com.fsck.k9.ui.permissions.PermissionUiHelper
+import com.fsck.k9.view.MessageWebView
 import com.fsck.k9.view.ViewSwitcher
 import com.fsck.k9.view.ViewSwitcher.OnSwitchCompleteListener
 import com.mikepenz.materialdrawer.util.getOptimalDrawerWidth
+import org.json.JSONException
+import org.json.JSONObject
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -138,16 +142,67 @@ open class MessageList :
     private val isShowAccountChip: Boolean
         get() = messageListFragment?.isShowAccountChip ?: true
 
-
     override fun onDialogPositiveClick(dialog: DialogFragment) {
         // User touched the dialog's positive button
         val key = dialog.dialog?.findViewById<EditText>(R.id.key)?.text.toString();
         Log.d("Key", key);
+
+        when (dialog.tag) {
+            "decrypt" -> decrypt(key)
+        }
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
         // User touched the dialog's negative button
     }
+
+//    TODO: add error guards
+    private fun decrypt(key: String) {
+        val messageWebView = findViewById<MessageWebView>(R.id.message_content)
+        val contentMatcher = Regex("<body><div dir=\"auto\">(.*)</div></body>", RegexOption.MULTILINE)
+        val matches = contentMatcher.find(messageWebView.currentHtmlContent)
+
+//        TODO: check for length to determine if this message is
+//              actually encrypted
+        val encryptedMessage = matches!!.groupValues[1]
+
+        val volleyQueue = Volley.newRequestQueue(this)
+        val url = "http://$API_URL/decrypt"
+        if (key.isEmpty()) {
+            Toast.makeText(this, "Encryption key cannot be empty!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val jsonBody = JSONObject()
+        try {
+            jsonBody.put("message", encryptedMessage)
+            jsonBody.put("key", key)
+        } catch (e: JSONException) {
+            throw RuntimeException(e)
+        }
+        val jsonObjectRequest = JsonObjectRequest(
+            Request.Method.POST,
+            url,
+            jsonBody,
+            Response.Listener { response: JSONObject ->
+                try {
+                    val decryptedMessage = response.getString("message")
+                    val decryptedContent = messageWebView.currentHtmlContent.replace(
+                        encryptedMessage,
+                        decryptedMessage
+                    )
+                    messageWebView.changeHtmlContent(decryptedContent)
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+            } as Response.Listener<JSONObject>,
+            {
+                val toast = Toast.makeText(this, "An error occured!", Toast.LENGTH_LONG)
+                toast.show()
+            },
+        )
+        volleyQueue.add(jsonObjectRequest)
+    }
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -1564,5 +1619,8 @@ open class MessageList :
 
             actionDisplaySearch(context, search, noThreading = false, newTask = false)
         }
+
+//        Extensions
+        const val API_URL = "192.168.174.82:9099"
     }
 }

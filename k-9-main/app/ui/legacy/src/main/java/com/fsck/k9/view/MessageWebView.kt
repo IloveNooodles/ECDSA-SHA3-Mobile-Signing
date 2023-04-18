@@ -14,6 +14,10 @@ class MessageWebView : WebView {
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
 
+    private var htmlText: String = ""
+    val currentHtmlContent: String
+        get() = htmlText
+
     fun blockNetworkData(shouldBlockNetworkData: Boolean) {
         // Images with content: URIs will not be blocked, nor will network images that are already in the WebView cache.
         try {
@@ -89,9 +93,12 @@ class MessageWebView : WebView {
     }
 
     private fun setHtmlContent(htmlText: String) {
+        this.htmlText = htmlText
         loadDataWithBaseURL("about:blank", htmlText, "text/html", "utf-8", null)
         resumeTimers()
     }
+
+    fun changeHtmlContent(htmlText: String) = setHtmlContent(htmlText)
 
     fun interface OnPageFinishedListener {
         fun onPageFinished()

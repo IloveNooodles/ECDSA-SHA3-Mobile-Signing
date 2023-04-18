@@ -337,6 +337,7 @@ class MessageViewFragment :
             R.id.move_to_drafts -> onMoveToDrafts()
             R.id.unsubscribe -> onUnsubscribe()
             R.id.show_headers -> onShowHeaders()
+            R.id.custom_decrypt -> onDecrypt()
             // TODO
             R.id.custom_verify -> onVerify()
             else -> return false
@@ -348,6 +349,10 @@ class MessageViewFragment :
     private fun onVerify(){
         val newFragment = KeyDialogFragment();
         newFragment.show(childFragmentManager, "Key")
+    }
+
+    private fun onDecrypt() {
+        KeyDialogFragment().show(childFragmentManager, "decrypt")
     }
 
     private fun onShowHeaders() {
