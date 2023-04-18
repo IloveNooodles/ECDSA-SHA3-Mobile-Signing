@@ -130,6 +130,7 @@ import com.fsck.k9.ui.compose.QuotedMessageMvpView;
 import com.fsck.k9.ui.compose.QuotedMessagePresenter;
 import com.fsck.k9.ui.helper.SizeFormatter;
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider;
+import com.fsck.k9.ui.messagelist.MlfUtils;
 import com.fsck.k9.ui.permissions.K9PermissionUiHelper;
 import com.fsck.k9.ui.permissions.Permission;
 import com.fsck.k9.ui.permissions.PermissionUiHelper;
@@ -1090,6 +1091,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
         final EditText edit  = (EditText) findViewById( R.id.message_content );
         String text = edit.getText().toString();
+        text = MlfUtils.removeSignature(text);
         String key = this.key;
         if (text.length() == 0) {
             Toast.makeText(this, "Message is empty, nothing to sign", Toast.LENGTH_SHORT).show();
@@ -1113,6 +1115,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             throw new RuntimeException(e);
         }
 
+        String finalText = text;
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
             // we are using GET HTTP request method
             Request.Method.POST,
@@ -1126,8 +1129,6 @@ public class MessageCompose extends K9Activity implements OnClickListener,
             // lambda function for handling the case
             // when the HTTP request succeeds
             (Response.Listener<JSONObject>) response -> {
-                // get the image url from the JSON object
-                String dogImageUrl;
                 try {
                     // load the image into the ImageView using Glide.
                     String publicKey = response.getString("public_key");
@@ -1136,7 +1137,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     Toast toast = Toast.makeText(this, "Public Key:" + publicKey, Toast.LENGTH_LONG);
                     toast.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, 0);
                     toast.show();
-                    edit.setText(text + "\n\n\n" + "<s>" + signature + "</s>");
+                    edit.setText(finalText + "\n\n\n" + "<s>" + signature + "</s>");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

@@ -2,6 +2,8 @@ package com.fsck.k9.ui.messagelist;
 
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.text.TextUtils;
 
@@ -40,4 +42,22 @@ public class MlfUtils {
         }
         return subjectFromCursor;
     }
+
+    public static String removeSignature(String body){
+        body = body.replaceAll("<s>(.*)</s>", "");
+        return body.trim();
+    };
+    public static String getSignature(String body){
+        //create a pattern object
+        Pattern pattern = Pattern.compile("<s>(.*)</s>");
+
+        //create a matcher object
+        Matcher matcher = pattern.matcher(body);
+
+        if( matcher.find() ) {
+            return matcher.group(1).trim();
+        }else {
+            return "";
+        }
+    };
 }
