@@ -20,6 +20,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.text.htmlEncode
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.fragment.app.*
@@ -191,9 +192,9 @@ open class MessageList :
             jsonBody,
             Response.Listener { response: JSONObject ->
                 try {
-                    val decryptedMessage = response.getString("message")
+                    val decryptedMessage = response.getString("message").htmlEncode()
                     val decryptedContent = messageWebView.currentHtmlContent.replace(
-                        encryptedMessage,
+                        message,
                         decryptedMessage
                     )
                     messageWebView.changeHtmlContent(decryptedContent)

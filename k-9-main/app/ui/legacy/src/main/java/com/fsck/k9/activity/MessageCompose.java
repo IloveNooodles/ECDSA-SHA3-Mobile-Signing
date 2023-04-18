@@ -1091,6 +1091,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
         final EditText edit  = (EditText) findViewById( R.id.message_content );
         String text = edit.getText().toString();
+        Log.d("sign", text);
         text = MlfUtils.removeSignature(text);
         String key = this.key;
         if (text.length() == 0) {
