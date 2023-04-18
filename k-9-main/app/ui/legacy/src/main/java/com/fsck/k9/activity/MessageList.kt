@@ -169,7 +169,8 @@ open class MessageList :
 
 //        TODO: check for length to determine if this message is
 //              actually encrypted
-        val message = Html.fromHtml(matches!!.groupValues[1]).toString()
+        val originalMessage = matches!!.groupValues[1];
+        val message = Html.fromHtml(originalMessage).toString()
         val encryptedMessage = MlfUtils.removeSignature(message);
         Log.d("Decrypt", encryptedMessage);
 
@@ -194,7 +195,7 @@ open class MessageList :
                 try {
                     val decryptedMessage = response.getString("message").htmlEncode()
                     val decryptedContent = messageWebView.currentHtmlContent.replace(
-                        message,
+                        originalMessage,
                         decryptedMessage
                     )
                     messageWebView.changeHtmlContent(decryptedContent)
@@ -1681,6 +1682,6 @@ open class MessageList :
         }
 
 //        Extensions
-        const val API_URL = "10.10.10.55:9099"
+        const val API_URL = "10.1.1.174:9099"
     }
 }
