@@ -54,6 +54,7 @@ import com.fsck.k9.ui.managefolders.ManageFoldersActivity
 import com.fsck.k9.ui.messagelist.DefaultFolderProvider
 import com.fsck.k9.ui.messagelist.MessageListFragment
 import com.fsck.k9.ui.messagelist.MessageListFragment.MessageListFragmentListener
+import com.fsck.k9.ui.messagelist.MlfUtils
 import com.fsck.k9.ui.messageview.Direction
 import com.fsck.k9.ui.messageview.MessageViewContainerFragment
 import com.fsck.k9.ui.messageview.MessageViewContainerFragment.MessageViewContainerListener
@@ -67,6 +68,7 @@ import com.fsck.k9.view.MessageWebView
 import com.fsck.k9.view.ViewSwitcher
 import com.fsck.k9.view.ViewSwitcher.OnSwitchCompleteListener
 import com.mikepenz.materialdrawer.util.getOptimalDrawerWidth
+import ext.keccak.Keccak
 import org.json.JSONException
 import org.json.JSONObject
 import org.koin.android.ext.android.inject
@@ -149,6 +151,7 @@ open class MessageList :
 
         when (dialog.tag) {
             "decrypt" -> decrypt(key)
+            "verify" -> verify(key)
         }
     }
 
@@ -164,7 +167,8 @@ open class MessageList :
 
 //        TODO: check for length to determine if this message is
 //              actually encrypted
-        val encryptedMessage = matches!!.groupValues[1]
+        val message = matches!!.groupValues[1]
+        val encryptedMessage = MlfUtils.removeSignature(message);
 
         val volleyQueue = Volley.newRequestQueue(this)
         val url = "http://$API_URL/decrypt"
@@ -195,11 +199,64 @@ open class MessageList :
                     e.printStackTrace()
                 }
             } as Response.Listener<JSONObject>,
-            {
-                val toast = Toast.makeText(this, "An error occured!", Toast.LENGTH_LONG)
-                toast.show()
-            },
-        )
+        ) {
+            val toast = Toast.makeText(this, "An error occured!", Toast.LENGTH_LONG)
+            toast.show()
+        }
+    volleyQueue.add(jsonObjectRequest)
+    }
+
+    private fun verify(key: String) {
+        val messageWebView = findViewById<MessageWebView>(R.id.message_content)
+        val contentMatcher = Regex("<body><div dir=\"auto\">(.*)</div></body>", RegexOption.MULTILINE)
+        val matches = contentMatcher.find(messageWebView.currentHtmlContent)
+
+        val message = matches!!.groupValues[1]
+        val body = MlfUtils.removeSignature(message);
+        val signature = MlfUtils.getSignature(message);
+
+        val volleyQueue = Volley.newRequestQueue(this)
+        val url = "http://$API_URL/verify"
+        if (key.isEmpty()) {
+            Toast.makeText(this, "Public key cannot be empty!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (signature.isEmpty()){
+            Toast.makeText(this, "Signature not found!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val hash = Keccak._256().hash(body.encodeToByteArray());
+        val jsonBody = JSONObject()
+        try {
+            jsonBody.put("signature", signature)
+            jsonBody.put("public_key", key)
+            jsonBody.put("hash", hash)
+
+        } catch (e: JSONException) {
+            throw RuntimeException(e)
+        }
+        val jsonObjectRequest = JsonObjectRequest(
+            Request.Method.POST,
+            url,
+            jsonBody,
+            Response.Listener { response: JSONObject ->
+                try {
+                    if (response.has("error")){
+                        val message = response.getString("error");
+                        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                    }else{
+                        val isVerified =  response.getBoolean("is_verified")
+                        if (isVerified) Toast.makeText(this, "Message verified!", Toast.LENGTH_LONG).show()
+                        else Toast.makeText(this, "Message verification failed!", Toast.LENGTH_LONG)
+                    }
+
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+            } as Response.Listener<JSONObject>,
+        ) {
+            Toast.makeText(this, "Message verification failed!", Toast.LENGTH_LONG).show()
+        }
         volleyQueue.add(jsonObjectRequest)
     }
 
@@ -1621,6 +1678,6 @@ open class MessageList :
         }
 
 //        Extensions
-        const val API_URL = "192.168.174.82:9099"
+        const val API_URL = "10.10.10.55:9099"
     }
 }

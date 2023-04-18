@@ -268,7 +268,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private boolean sendMessageHasBeenTriggered = false;
 
 //    Extensions
-    private static String API_URL = "192.168.174.82:9099";
+    private static String API_URL = "10.10.10.55:9099";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
