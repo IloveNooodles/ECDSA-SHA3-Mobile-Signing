@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.text.Html
 import android.util.Log
 import android.view.*
 import android.view.animation.AnimationUtils
@@ -167,8 +168,9 @@ open class MessageList :
 
 //        TODO: check for length to determine if this message is
 //              actually encrypted
-        val message = matches!!.groupValues[1]
+        val message = Html.fromHtml(matches!!.groupValues[1]).toString()
         val encryptedMessage = MlfUtils.removeSignature(message);
+        Log.d("Decrypt", encryptedMessage);
 
         val volleyQueue = Volley.newRequestQueue(this)
         val url = "http://$API_URL/decrypt"
@@ -211,7 +213,7 @@ open class MessageList :
         val contentMatcher = Regex("<body><div dir=\"auto\">(.*)</div></body>", RegexOption.MULTILINE)
         val matches = contentMatcher.find(messageWebView.currentHtmlContent)
 
-        val message = matches!!.groupValues[1]
+        val message = Html.fromHtml(matches!!.groupValues[1]).toString()
         val body = MlfUtils.removeSignature(message);
         val signature = MlfUtils.getSignature(message);
 
