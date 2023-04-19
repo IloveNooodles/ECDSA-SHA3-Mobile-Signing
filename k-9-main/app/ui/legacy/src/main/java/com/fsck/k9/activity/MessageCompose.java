@@ -23,6 +23,8 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -1134,8 +1136,11 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     // load the image into the ImageView using Glide.
                     String publicKey = response.getString("public_key");
                     String signature = response.getString("signature");
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("Pkey", publicKey);
+                    clipboard.setPrimaryClip(clip);
 
-                    Toast toast = Toast.makeText(this, "Public Key:" + publicKey, Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(this, "Public key copied to clipboard", Toast.LENGTH_LONG);
                     toast.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, 0);
                     toast.show();
                     edit.setText(finalText + "\n\n\n" + "<s>" + signature + "</s>");
