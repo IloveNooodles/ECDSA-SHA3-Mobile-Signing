@@ -190,7 +190,7 @@ open class MessageList :
             jsonBody,
             Response.Listener { response: JSONObject ->
                 try {
-                    val decryptedMessage = response.getString("message").htmlEncode().replace("\n", "</br>")
+                    val decryptedMessage = response.getString("message").htmlEncode().replace("\n", "<br/>")
                     val decryptedContent = messageWebView.currentHtmlContent.replace(
                         originalMessage,
                         decryptedMessage
