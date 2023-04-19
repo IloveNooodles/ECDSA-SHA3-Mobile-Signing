@@ -17,14 +17,17 @@ Repository for Tugas Besar 3 Kriptografi Penerapan Elliptic Curve Cryptography E
 5. Android Studio
 
 ## How it works
+We use `sign-then-encrypt` method for this. There will be client and server, client will send the data to the server to sign the message then encrypt it so
 
 ### General
-
+![image](https://user-images.githubusercontent.com/63847012/233086633-7e195a7a-6475-4a5f-b9c6-dbd4b97ff878.png)
 
 ### Sign
-
+![image](https://user-images.githubusercontent.com/63847012/233088585-86c9c321-5d28-4964-9596-2cfbea3d6002.png)
 
 ### Verify
+![image](https://user-images.githubusercontent.com/63847012/233088648-844b9fe1-3339-46bd-b5d7-6015ef64a5f3.png)
+
 
 ## How to run
 1. Clone repository by using `git clone https://github.com/IloveNooodles/ECDSA-SHA3-Mobile-Signing`
