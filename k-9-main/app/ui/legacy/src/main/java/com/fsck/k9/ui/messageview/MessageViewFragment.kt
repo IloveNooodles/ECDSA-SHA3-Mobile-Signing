@@ -348,7 +348,7 @@ class MessageViewFragment :
 
     private fun onVerify(){
         val newFragment = KeyDialogFragment();
-        newFragment.show(childFragmentManager, "sign")
+        newFragment.show(childFragmentManager, "verify")
     }
 
     private fun onDecrypt() {

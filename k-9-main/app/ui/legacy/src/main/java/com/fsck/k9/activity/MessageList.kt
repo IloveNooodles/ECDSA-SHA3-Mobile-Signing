@@ -251,7 +251,7 @@ open class MessageList :
                     }else{
                         val isVerified =  response.getBoolean("is_verified")
                         if (isVerified) Toast.makeText(this, "Message verified!", Toast.LENGTH_LONG).show()
-                        else Toast.makeText(this, "Message verification failed!", Toast.LENGTH_LONG)
+                        else Toast.makeText(this, "Message verification failed!", Toast.LENGTH_LONG).show()
                     }
 
                 } catch (e: JSONException) {
