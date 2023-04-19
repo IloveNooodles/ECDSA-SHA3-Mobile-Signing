@@ -166,9 +166,6 @@ open class MessageList :
         val messageWebView = findViewById<MessageWebView>(R.id.message_content)
         val contentMatcher = Regex("<body><div dir=\"auto\">(.*)</div></body>", RegexOption.MULTILINE)
         val matches = contentMatcher.find(messageWebView.currentHtmlContent)
-
-//        TODO: check for length to determine if this message is
-//              actually encrypted
         val originalMessage = matches!!.groupValues[1];
         val message = Html.fromHtml(originalMessage).toString()
         val encryptedMessage = MlfUtils.removeSignature(message);
@@ -193,7 +190,7 @@ open class MessageList :
             jsonBody,
             Response.Listener { response: JSONObject ->
                 try {
-                    val decryptedMessage = response.getString("message").htmlEncode()
+                    val decryptedMessage = response.getString("message").htmlEncode().replace("\n", "</br>")
                     val decryptedContent = messageWebView.currentHtmlContent.replace(
                         originalMessage,
                         decryptedMessage
@@ -212,7 +209,7 @@ open class MessageList :
 
     private fun verify(key: String) {
         val messageWebView = findViewById<MessageWebView>(R.id.message_content)
-        val contentMatcher = Regex("<body><div dir=\"auto\">(.*)</div></body>", RegexOption.MULTILINE)
+        val contentMatcher = Regex("<body><div dir=\"auto\">((.|\\n|\\r)*)</div></body>", RegexOption.MULTILINE)
         val matches = contentMatcher.find(messageWebView.currentHtmlContent)
 
         val message = Html.fromHtml(matches!!.groupValues[1]).toString()
