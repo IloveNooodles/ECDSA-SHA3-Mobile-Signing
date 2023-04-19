@@ -270,7 +270,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private boolean sendMessageHasBeenTriggered = false;
 
 //    Extensions
-    private static String API_URL = "10.1.1.174:9099";
+    private static String API_URL = "http://172.20.10.2:9099";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -1089,7 +1089,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private void customSign(){
         RequestQueue volleyQueue = Volley.newRequestQueue(this);
         // url of the api through which we get random dog images
-        String url = "http://" + API_URL + "/sign";
+        String url = API_URL + "/sign";
 
         final EditText edit  = (EditText) findViewById( R.id.message_content );
         String text = edit.getText().toString();
@@ -1138,9 +1138,10 @@ public class MessageCompose extends K9Activity implements OnClickListener,
                     String signature = response.getString("signature");
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText("Pkey", publicKey);
+                    Log.d("PKEY", publicKey);
                     clipboard.setPrimaryClip(clip);
 
-                    Toast toast = Toast.makeText(this, "Public key copied to clipboard", Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(this, "Public key copied to clipboard\n" + publicKey, Toast.LENGTH_LONG);
                     toast.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, 0);
                     toast.show();
                     edit.setText(finalText + "\n\n\n" + "<s>" + signature + "</s>");
@@ -1167,7 +1168,7 @@ public class MessageCompose extends K9Activity implements OnClickListener,
 
     private void encrypt() {
         RequestQueue volleyQueue = Volley.newRequestQueue(this);
-        String url = "http://" + API_URL + "/encrypt";
+        String url = API_URL + "/encrypt";
         final EditText edit = (EditText) findViewById( R.id.message_content );
         String text = edit.getText().toString();
         String key = this.key;

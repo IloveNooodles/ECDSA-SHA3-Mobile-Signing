@@ -175,7 +175,7 @@ open class MessageList :
         Log.d("Decrypt", encryptedMessage);
 
         val volleyQueue = Volley.newRequestQueue(this)
-        val url = "http://$API_URL/decrypt"
+        val url = "$API_URL/decrypt"
         if (key.isEmpty()) {
             Toast.makeText(this, "Encryption key cannot be empty!", Toast.LENGTH_SHORT).show()
             return
@@ -220,7 +220,7 @@ open class MessageList :
         val signature = MlfUtils.getSignature(message);
 
         val volleyQueue = Volley.newRequestQueue(this)
-        val url = "http://$API_URL/verify"
+        val url = "$API_URL/verify"
         if (key.isEmpty()) {
             Toast.makeText(this, "Public key cannot be empty!", Toast.LENGTH_SHORT).show()
             return
@@ -1682,6 +1682,6 @@ open class MessageList :
         }
 
 //        Extensions
-        const val API_URL = "10.1.1.174:9099"
+        const val API_URL = "http://172.20.10.2:9099"
     }
 }

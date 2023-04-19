@@ -20,7 +20,6 @@ def index():
 # public_key -> hex encoded string
 # signature -> hex encoded string
 
-
 @app.route("/sign", methods=["POST"])
 def sign():
     form = request.json
