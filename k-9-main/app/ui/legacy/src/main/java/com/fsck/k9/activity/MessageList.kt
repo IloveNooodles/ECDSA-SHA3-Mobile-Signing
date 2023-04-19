@@ -213,7 +213,7 @@ open class MessageList :
         val matches = contentMatcher.find(messageWebView.currentHtmlContent)
 
         val message = Html.fromHtml(matches!!.groupValues[1]).toString()
-        val body = MlfUtils.removeSignature(message);
+        val body = MlfUtils.removeSignature(message).trim();
         val signature = MlfUtils.getSignature(message);
 
         val volleyQueue = Volley.newRequestQueue(this)
